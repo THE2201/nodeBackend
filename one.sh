@@ -1,36 +1,26 @@
-#!/bin/sh
+#!/bin/bash
 
-OS=$(uname -s)
-
+# Versión del sistema operativo
 SO_VERSION=$(uname -sr)
 
-if [ "$OS" = "FreeBSD" ]; then
-    CPU=$(sysctl -n hw.model)
-else
-    CPU=$(grep -m 1 "model name" /proc/cpuinfo | cut -d: -f2 | sed 's/^ //')
-fi
+# Procesador
+CPU=$(grep -m 1 "model name" /proc/cpuinfo | cut -d: -f2 | sed 's/^ //')
 
-if [ "$OS" = "FreeBSD" ]; then
-    USO_CPU=$(top -d1 | grep "CPU:" | awk '{print $3}' | cut -d% -f1)
-else
-    USO_CPU=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')
-fi
+# Uso de CPU (sumando user + system)
+USO_CPU=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')
 
-if command -v ip >/dev/null 2>&1; then
-    IP=$(ip addr show | awk '/inet / && !/127.0.0.1/ {print $2}' | cut -d/ -f1 | head -n1)
-    GATEWAY=$(ip route | awk '/default/ {print $3}' | head -n1)
-    MASCARA=$(ipcalc "$IP" 2>/dev/null | grep Netmask | awk '{print $2}')
-else
-    IP=$(ifconfig | awk '/inet / && $2 != "127.0.0.1" {print $2}' | head -n1)
-    GATEWAY=$(netstat -rn | awk '/default/ {print $2}' | head -n1)
-    MASCARA=$(ifconfig | awk '/inet / && $2 != "127.0.0.1" {print $4}' | head -n1)
-fi
+# Información de red
+IP=$(ip addr show | awk '/inet / && !/127.0.0.1/ {print $2}' | head -n1 | cut -d/ -f1)
+GATEWAY=$(ip route | awk '/default/ {print $3}' | head -n1)
+MASCARA=$(ipcalc "$IP" 2>/dev/null | grep Netmask | awk '{print $2}')
 
-
+# Usuario actual
 USUARIO=$(whoami)
 
-TIEMPO_ENCENDIDO=$(uptime -p 2>/dev/null || uptime | cut -d',' -f1)
+# Tiempo desde arranque
+TIEMPO_ENCENDIDO=$(uptime -p)
 
+# Construir mensaje con heredoc para evitar errores
 MENSAJE=$(cat <<EOF
 Sistema Operativo  : $SO_VERSION
 Procesador         : $CPU
@@ -44,5 +34,5 @@ EOF
 )
 
 # Mostrar cuadro de diálogo
-dialog --title "Informe del Sistema" --msgbox "$MENSAJE" 20 72
+dialog --title "Informe del Sistema Linux" --msgbox "$MENSAJE" 15 70
 clear
