@@ -46,8 +46,7 @@ IP                 : ${IP:-N/D}
 Máscara de red     : ${MASCARA:-N/D}
 Gateway            : ${GATEWAY:-N/D}
 Usuario actual     : $USUARIO
-Tiempo encendido   : $TIEMPO_ENCENDIDO
-"
+Tiempo encendido   : $TIEMPO_ENCENDIDO"
 
 # Mostrar cuadro de diálogo
 dialog --title "Informe del Sistema" --msgbox "$MENSAJE" 20 72
