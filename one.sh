@@ -1,32 +1,54 @@
-import psutil
-import time
-import os
+#!/bin/sh
 
-def mostrar_uso():
-    try:
-        while True:
-            uso_cpu = psutil.cpu_percent(interval=1)
-            mem = psutil.virtual_memory()
-            total = mem.total / (1024 ** 2) 
-            usado = mem.used / (1024 ** 2)
-            libre = mem.available / (1024 ** 2)
-            porcentaje_mem = mem.percent
+# Detectar sistema operativo
+OS=$(uname -s)
 
-            # Limpiar pantalla
-            os.system('clear')
+# Versión del sistema
+SO_VERSION=$(uname -sr)
 
-            print("Visor de Uso de CPU y Memoria RAM\n")
-            print(f"Uso de CPU      : {uso_cpu:.2f}%")
-            print(f"Memoria Total   : {total:.2f} MB")
-            print(f"Memoria Usada   : {usado:.2f} MB")
-            print(f"Memoria Libre   : {libre:.2f} MB")
-            print(f"Uso de Memoria  : {porcentaje_mem:.2f}%")
+# Procesador
+if [ "$OS" = "FreeBSD" ]; then
+    CPU=$(sysctl -n hw.model)
+else
+    CPU=$(grep -m 1 "model name" /proc/cpuinfo | cut -d: -f2 | sed 's/^ //')
+fi
 
-            print("\n(Actualizando cada 3 s)")
-            time.sleep(3)
+# Uso de CPU
+if [ "$OS" = "FreeBSD" ]; then
+    USO_CPU=$(top -d1 | grep "CPU:" | awk '{print $3}' | cut -d% -f1)
+else
+    USO_CPU=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')
+fi
 
-    except KeyboardInterrupt:
-        print("\nMonitoreo detenido.")
+# Información de red
+if command -v ip >/dev/null 2>&1; then
+    IP=$(ip addr show | awk '/inet / && !/127.0.0.1/ {print $2}' | cut -d/ -f1 | head -n1)
+    GATEWAY=$(ip route | awk '/default/ {print $3}' | head -n1)
+    MASCARA=$(ipcalc "$IP" 2>/dev/null | grep Netmask | awk '{print $2}')
+else
+    IP=$(ifconfig | awk '/inet / && $2 != "127.0.0.1" {print $2}' | head -n1)
+    GATEWAY=$(netstat -rn | awk '/default/ {print $2}' | head -n1)
+    MASCARA=$(ifconfig | awk '/inet / && $2 != "127.0.0.1" {print $4}' | head -n1)
+fi
 
-if __name__ == "__main__":
-    mostrar_uso()
+# Usuario actual
+USUARIO=$(whoami)
+
+# Tiempo de encendido
+TIEMPO_ENCENDIDO=$(uptime -p 2>/dev/null || uptime | cut -d',' -f1)
+
+# Armar mensaje
+MENSAJE="\
+Sistema Operativo  : $SO_VERSION
+Procesador         : $CPU
+Uso de CPU         : ${USO_CPU:-N/D}%
+IP                 : ${IP:-N/D}
+Máscara de red     : ${MASCARA:-N/D}
+Gateway            : ${GATEWAY:-N/D}
+Usuario actual     : $USUARIO
+Tiempo encendido   : $TIEMPO_ENCENDIDO
+"
+
+# Mostrar cuadro de diálogo
+dialog --title "Informe del Sistema" --msgbox "$MENSAJE" 20 72
+clear
