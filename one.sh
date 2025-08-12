@@ -1,30 +1,32 @@
+import psutil
 import time
 import os
 
-def barra(valor, maximo, longitud=50):
-    proporción = valor / maximo
-    llenos = int(proporción * longitud)
-    vacíos = longitud - llenos
-    return '[' + '#' * llenos + '-' * vacíos + f'] {valor:02d}/{maximo}'
-
-def reloj_barras():
+def mostrar_uso():
     try:
         while True:
-            ahora = time.localtime()
-            hora = ahora.tm_hour
-            minuto = ahora.tm_min
-            segundo = ahora.tm_sec
+            uso_cpu = psutil.cpu_percent(interval=1)
+            mem = psutil.virtual_memory()
+            total = mem.total / (1024 ** 2) 
+            usado = mem.used / (1024 ** 2)
+            libre = mem.available / (1024 ** 2)
+            porcentaje_mem = mem.percent
 
-            os.system('clear')  
+            # Limpiar pantalla
+            os.system('clear')
 
-            print("🕒  Reloj de Barras de Progreso (Consola)\n")
-            print("Horas  :", barra(hora, 23))
-            print("Minutos:", barra(minuto, 59))
-            print("Segundos:", barra(segundo, 59))
+            print("Visor de Uso de CPU y Memoria RAM\n")
+            print(f"Uso de CPU      : {uso_cpu:.2f}%")
+            print(f"Memoria Total   : {total:.2f} MB")
+            print(f"Memoria Usada   : {usado:.2f} MB")
+            print(f"Memoria Libre   : {libre:.2f} MB")
+            print(f"Uso de Memoria  : {porcentaje_mem:.2f}%")
 
-            time.sleep(1)
+            print("\n(Actualizando cada 3 s)")
+            time.sleep(3)
+
     except KeyboardInterrupt:
-        print("\nReloj detenido.")
+        print("\nMonitoreo detenido.")
 
 if __name__ == "__main__":
-    reloj_barras()
+    mostrar_uso()
