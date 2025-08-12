@@ -38,7 +38,7 @@ USUARIO=$(whoami)
 TIEMPO_ENCENDIDO=$(uptime -p 2>/dev/null || uptime | cut -d',' -f1)
 
 # Armar mensaje
-MENSAJE="\
+MENSAJE="
 Sistema Operativo  : $SO_VERSION
 Procesador         : $CPU
 Uso de CPU         : ${USO_CPU:-N/D}%
